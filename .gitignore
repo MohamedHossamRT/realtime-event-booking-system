@@ -1,0 +1,73 @@
+.vscode/
+
+# Node.js (Client + Server)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+pnpm-lock.yaml
+yarn.lock
+
+# Environment variables
+.env
+.env.*
+*.env.local
+*.env.development
+*.env.production
+*.env.test
+
+# Logs
+logs/
+*.log
+log.txt
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+
+# Build output
+dist/
+build/
+out/
+coverage/
+*.tsbuildinfo
+
+# Cache
+.cache/
+.vite/
+vite.config.ts.timestamp*
+.sass-cache/
+.eslintcache
+.stylelintcache
+.parcel-cache/
+turbo/
+.pnp/
+.pnp.js
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# TypeScript
+*.tsbuildinfo
+
+# Redis / DB dumps (Server)
+dump.rdb
+*.rdb
+*.sqlite
+*.sqlite3
+
+# Local secrets
+*.pem
+*.key
+*.crt
+
+# Shadcn specific
+components.json
+
+Client/dist/
+Server/logs/
+uploads/
+public/uploads/
