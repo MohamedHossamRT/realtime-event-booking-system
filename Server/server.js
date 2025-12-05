@@ -15,7 +15,7 @@ process.on("uncaughtException", (err) => {
 });
 
 connectDB();
-// redis.connect() is automatic with ioredis, or we can await it here if strictly required
+// redis.connect() is automatic with ioredis
 
 const server = http.createServer(app);
 const io = new Server(server, {

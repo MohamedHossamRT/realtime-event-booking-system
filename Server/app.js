@@ -5,6 +5,7 @@ const mongoSanitize = require("express-mongo-sanitize");
 const morgan = require("morgan");
 const { errorHandler } = require("./middlewares/errorHandler");
 const logger = require("./utils/logger");
+const AppError = require("./utils/appError");
 
 const app = express();
 
@@ -31,8 +32,15 @@ if (process.env.NODE_ENV === "development") {
   );
 }
 
+const eventRouter = require("./routes/eventRoutes");
+
 // API Routes
-// app.use('/api/v1/events', eventRouter);
+app.use("/api/v1/events", eventRouter);
+
+// Unhandled Routes (404)
+app.all("*", (req, res, next) => {
+  next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
+});
 
 // Globale Error Handling Middleware
 app.use(errorHandler);
