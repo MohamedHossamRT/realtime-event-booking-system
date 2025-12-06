@@ -1,20 +1,33 @@
 const express = require("express");
-const seatRouter = require("./seatRoutes");
 const eventController = require("../controllers/eventController");
+const authController = require("../middlewares/auth");
+const seatRouter = require("./seatRoutes");
 
 const router = express.Router();
+
+router.use("/:eventId/seats", seatRouter);
 
 router
   .route("/")
   .get(eventController.getAllEvents)
-  .post(eventController.createEvent);
+  .post(
+    authController.protect,
+    authController.restrictTo("admin"),
+    eventController.createEvent
+  );
 
 router
   .route("/:id")
   .get(eventController.getEvent)
-  .patch(eventController.updateEvent)
-  .delete(eventController.deleteEvent);
-
-router.use("/:eventId/seats", seatRouter);
+  .patch(
+    authController.protect,
+    authController.restrictTo("admin"),
+    eventController.updateEvent
+  )
+  .delete(
+    authController.protect,
+    authController.restrictTo("admin"),
+    eventController.deleteEvent
+  );
 
 module.exports = router;

@@ -16,7 +16,8 @@ exports.getSeats = catchAsync(async (req, res, next) => {
 exports.bookSeats = catchAsync(async (req, res, next) => {
   const { eventId } = req.params;
   const { seatIds, totalAmount } = req.body;
-  const userId = req.body.userId;
+
+  const userId = req.user._id;
 
   if (!seatIds || seatIds.length === 0) {
     return next(new AppError("No seats selected", 400));

@@ -32,9 +32,11 @@ if (process.env.NODE_ENV === "development") {
   );
 }
 
+const authRouter = require("./routes/authRoutes");
 const eventRouter = require("./routes/eventRoutes");
 
 // API Routes
+app.use("/api/v1/users", authRouter);
 app.use("/api/v1/events", eventRouter);
 
 // Unhandled Routes (404)
