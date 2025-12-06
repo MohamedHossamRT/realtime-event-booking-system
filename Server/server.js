@@ -5,6 +5,8 @@ const app = require("./app");
 const connectDB = require("./config/db");
 const redis = require("./config/redis");
 const logger = require("./utils/logger");
+const socketAuth = require("./middlewares/socketAuth");
+const seatHandler = require("./sockets/seatHandler");
 
 process.on("uncaughtException", (err) => {
   logger.error("UNCAUGHT EXCEPTION! 💥 Shutting down...", {
@@ -27,13 +29,16 @@ const io = new Server(server, {
 
 // Store IO instance globally so that Controllers can access it
 app.set("io", io);
+io.use(socketAuth);
 
-// Socket Logic
 io.on("connection", (socket) => {
-  logger.info(`New Socket Connection: ${socket.id}`);
+  logger.info(
+    `Authenticated User Connected: ${socket.data.user.name} (${socket.id})`
+  );
+  seatHandler(io, socket);
 
-  socket.on("disconnect", () => {
-    logger.info(`Socket Disconnected: ${socket.id}`);
+  socket.on("error", (err) => {
+    logger.error(`Socket Error: ${err.message}`);
   });
 });
 
