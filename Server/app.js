@@ -34,7 +34,7 @@ if (process.env.NODE_ENV === "development") {
 
 const authRouter = require("./routes/authRoutes");
 const eventRouter = require("./routes/eventRoutes");
-const bookingRouter = require("./routes/booking.routes");
+const bookingRouter = require("./routes/bookingRoutes");
 
 // API Routes
 app.use("/api/v1/users", authRouter);
@@ -42,7 +42,7 @@ app.use("/api/v1/events", eventRouter);
 app.use("/api/v1/bookings", bookingRouter);
 
 // Unhandled Routes (404)
-app.all("*", (req, res, next) => {
+app.use((req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
 
