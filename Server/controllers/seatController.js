@@ -35,3 +35,22 @@ exports.bookSeats = catchAsync(async (req, res, next) => {
     data: { booking },
   });
 });
+
+exports.getMyBookings = catchAsync(async (req, res, next) => {
+  const bookings = await Booking.find({ user: req.user._id })
+    .populate({
+      path: "event",
+      select: "title date venueConfig.address",
+    })
+    .populate({
+      path: "seats",
+      select: "row number label price",
+    })
+    .sort({ createdAt: -1 });
+
+  res.status(200).json({
+    status: "success",
+    results: bookings.length,
+    data: { bookings },
+  });
+});

@@ -34,10 +34,12 @@ if (process.env.NODE_ENV === "development") {
 
 const authRouter = require("./routes/authRoutes");
 const eventRouter = require("./routes/eventRoutes");
+const bookingRouter = require("./routes/booking.routes");
 
 // API Routes
 app.use("/api/v1/users", authRouter);
 app.use("/api/v1/events", eventRouter);
+app.use("/api/v1/bookings", bookingRouter);
 
 // Unhandled Routes (404)
 app.all("*", (req, res, next) => {

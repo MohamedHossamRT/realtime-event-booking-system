@@ -43,6 +43,11 @@ exports.getEventSeats = async (eventId) => {
 };
 
 exports.lockSeat = async (eventId, seatId, userId) => {
+  const event = await Event.findById(eventId).select("status");
+  if (!event || event.status !== "active") {
+    throw new AppError("This event is not accepting bookings.", 400);
+  }
+
   const key = getRedisKey(eventId, seatId);
 
   // Validating -> Does the seat exist and is it physically available?
@@ -105,7 +110,10 @@ exports.bookSeats = async (eventId, userId, seatIds, totalAmount) => {
 
     // Updating Seats in MongoDB to 'booked'
     const updateResult = await Seat.updateMany(
-      { _id: { $in: seatIds } },
+      {
+        _id: { $in: seatIds },
+        status: { $ne: "booked" },
+      },
       {
         $set: {
           status: "booked",
@@ -116,9 +124,11 @@ exports.bookSeats = async (eventId, userId, seatIds, totalAmount) => {
       },
       { session }
     );
-
     if (updateResult.modifiedCount !== seatIds.length) {
-      throw new AppError("Failed to book all seats. Please try again.", 500);
+      throw new AppError(
+        "One or more seats were already booked by another user.",
+        409
+      );
     }
 
     // Creating Booking Record
