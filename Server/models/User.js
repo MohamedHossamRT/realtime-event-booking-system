@@ -18,7 +18,7 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: [true, "Please provide a password"],
-      minlength: 8,
+      minlength: 6,
       select: false,
     },
   },
@@ -26,12 +26,11 @@ const userSchema = new mongoose.Schema(
 );
 
 // Hashing password before saving
-userSchema.pre("save", async function (next) {
+userSchema.pre("save", async function () {
   if (!this.isModified("password")) return next();
 
   // Higher cost than 12 is safer but slower
   this.password = await bcrypt.hash(this.password, 12);
-  next();
 });
 
 // Compare candidate password with database hash

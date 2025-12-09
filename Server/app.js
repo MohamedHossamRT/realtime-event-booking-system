@@ -1,7 +1,6 @@
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
-const mongoSanitize = require("express-mongo-sanitize");
 const morgan = require("morgan");
 const { errorHandler } = require("./middlewares/errorHandler");
 const logger = require("./utils/logger");
@@ -20,7 +19,6 @@ app.use(
 );
 
 app.use(express.json({ limit: "10kb" })); // Limiting body size for (DoS protection)
-app.use(mongoSanitize());
 
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));

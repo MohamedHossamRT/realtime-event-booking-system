@@ -5,6 +5,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { Navbar } from "@/components/Navbar";
+
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+
+// Pages
 import Index from "./pages/Index";
 import BookingRoom from "./pages/BookingRoom";
 import Login from "./pages/Login";
@@ -26,13 +30,44 @@ const App = () => (
             <Navbar />
             <main className="flex-1">
               <Routes>
+                {/* PUBLIC ROUTES */}
                 <Route path="/" element={<Index />} />
-                <Route path="/booking/:eventId" element={<BookingRoom />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
-                <Route path="/admin" element={<AdminDashboard />} />
-                <Route path="/my-bookings" element={<MyBookings />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+
+                {/* PROTECTED ROUTES (Any Logged-in User) */}
+                <Route
+                  path="/my-bookings"
+                  element={
+                    <ProtectedRoute>
+                      <MyBookings />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/*Socket.io connection requires an Auth Token to handshake.
+                   Guests cannot connect to the real-time server.
+                */}
+                <Route
+                  path="/booking/:eventId"
+                  element={
+                    <ProtectedRoute>
+                      <BookingRoom />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* ADMIN ROUTES (Role Restricted) */}
+                <Route
+                  path="/admin"
+                  element={
+                    <ProtectedRoute allowedRoles={["admin"]}>
+                      <AdminDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* CATCH-ALL */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </main>
