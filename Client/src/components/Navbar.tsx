@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/authStore";
 
 // This list is modified dynamically in the render but I will keep base links here
-const baseLinks = [{ href: "/", label: "Events" }];
+const baseLinks = [{ href: "", label: "" }];
 
 export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -133,6 +133,7 @@ export function Navbar() {
       {mobileMenuOpen && (
         <div className="border-b border-border bg-background/95 backdrop-blur-lg md:hidden animate-fade-in">
           <div className="container flex flex-col gap-4 py-4">
+            {/* Base Links */}
             {baseLinks.map((link) => (
               <Link
                 key={link.href}
@@ -151,7 +152,7 @@ export function Navbar() {
 
             <div className="h-px bg-border/50 my-2" />
 
-            {/* Mobile Logic */}
+            {/* LOGIC: Authenticated vs Guest */}
             {user ? (
               <>
                 <div className="text-sm font-medium text-muted-foreground px-2 pb-2">
@@ -171,6 +172,7 @@ export function Navbar() {
                   </Button>
                 </Link>
 
+                {/* Only show Admin if user is admin */}
                 {user.role === "admin" && (
                   <Link to="/admin" onClick={() => setMobileMenuOpen(false)}>
                     <Button
@@ -196,15 +198,15 @@ export function Navbar() {
               </>
             ) : (
               <>
-                <Link to="/admin" onClick={() => setMobileMenuOpen(false)}>
-                  <Button variant="outline" size="sm" className="w-full gap-2">
-                    <Shield className="h-4 w-4" />
-                    Admin Portal
-                  </Button>
-                </Link>
+                {/* GUEST VIEW - NO ADMIN BUTTON HERE */}
                 <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
                   <Button variant="hero" size="sm" className="w-full gap-2">
                     Sign In
+                  </Button>
+                </Link>
+                <Link to="/register" onClick={() => setMobileMenuOpen(false)}>
+                  <Button variant="outline" size="sm" className="w-full gap-2">
+                    Get Started
                   </Button>
                 </Link>
               </>
