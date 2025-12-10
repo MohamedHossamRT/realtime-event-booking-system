@@ -7,6 +7,11 @@ const eventSchema = new mongoose.Schema(
       required: [true, "An event must have a title"],
       trim: true,
     },
+    venue: {
+      type: String,
+      required: [true, "An event must have a venue name"],
+      trim: true,
+    },
     date: {
       type: Date,
       required: [true, "An event must have a date"],

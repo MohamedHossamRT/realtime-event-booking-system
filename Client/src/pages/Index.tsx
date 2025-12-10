@@ -45,32 +45,36 @@ const Index = () => {
   // Data Transformation from Backend to Frontend
   const events: FrontendEvent[] =
     data?.data?.events.map((beEvent: any) => {
-      // Calculating total seats from config
       const totalSeats = beEvent.venueConfig.rows * beEvent.venueConfig.cols;
+      const realAvailable =
+        beEvent.availableSeats !== undefined
+          ? beEvent.availableSeats
+          : totalSeats;
 
       const dateObj = new Date(beEvent.date);
 
       return {
         id: beEvent._id,
         title: beEvent.title,
-        // "Oct 24, 2025"
         date: dateObj.toLocaleDateString("en-US", {
           month: "short",
           day: "numeric",
           year: "numeric",
         }),
-        // "8:00 PM"
         time: dateObj.toLocaleTimeString("en-US", {
           hour: "numeric",
           minute: "2-digit",
         }),
-        venue: "Pulse Main Hall", // Static venue name since backend stores config only
+
+        venue: beEvent.venue || "Pulse Main Hall",
+
         image:
           EVENT_IMAGES[
             beEvent._id.charCodeAt(beEvent._id.length - 1) % EVENT_IMAGES.length
-          ], // Random deterministic image
+          ],
         price: beEvent.venueConfig.price,
-        availableSeats: totalSeats,
+
+        availableSeats: realAvailable,
         totalSeats: totalSeats,
         category: "Live Event",
       };

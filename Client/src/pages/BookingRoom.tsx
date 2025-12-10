@@ -8,7 +8,6 @@ import { MobileBookingSummary } from "@/components/MobileBookingSummary";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-
 import { useRealTimeEvent } from "@/hooks/useRealTimeEvent";
 import { useAuthStore } from "@/stores/authStore";
 import { BookingService } from "@/services/bookingService";
@@ -19,16 +18,12 @@ const BookingRoom = () => {
   const { toast } = useToast();
   const { user } = useAuthStore();
 
-  // 1. Load Logic Hook (The Brain)
   const { event, seats, isLoading, handleSeatClick } =
     useRealTimeEvent(eventId);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // 2. Filter "My Selection" for the Summary
-  // The hook automatically updates status to 'selected' for our own locks
   const mySeats = seats.filter((seat) => seat.status === "selected");
 
-  // 3. Checkout Logic
   const handleCheckout = async () => {
     if (mySeats.length === 0) return;
 
@@ -83,7 +78,8 @@ const BookingRoom = () => {
                   {event.title}
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  {new Date(event.date).toLocaleDateString()} • Pulse Main Hall
+                  {/* THE FIX: Use event.venue dynamically */}
+                  {new Date(event.date).toLocaleDateString()} • {event.venue}
                 </p>
               </div>
             </div>
@@ -113,7 +109,6 @@ const BookingRoom = () => {
                 <Badge variant="secondary">{mySeats.length} selected</Badge>
               </div>
 
-              {/* Render the Grid */}
               <div className="flex justify-center">
                 <SeatMap
                   seats={seats}
@@ -130,7 +125,10 @@ const BookingRoom = () => {
               <BookingSummary
                 eventTitle={event.title}
                 eventDate={new Date(event.date).toLocaleDateString()}
-                eventTime={"8:00 PM"}
+                eventTime={new Date(event.date).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
                 selectedSeats={mySeats.map((s) => ({
                   row: s.row,
                   number: s.number,

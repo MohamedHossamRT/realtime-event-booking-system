@@ -20,10 +20,17 @@ module.exports = (io, socket) => {
         const [eventId, seatId] = item.split(":");
 
         // Release in Redis
-        await SeatService.releaseSeat(eventId, seatId, user._id.toString());
+        const wasLocked = await SeatService.releaseSeat(
+          eventId,
+          seatId,
+          user._id.toString()
+        );
 
-        // Notify Room
-        io.to(eventId).emit("seat_released", { seatId });
+        // Only emit 'seat_released' if we ACTUALLY released a lock.
+        // If 'wasLocked' is false, it means the seat was just booked.
+        if (wasLocked) {
+          io.to(eventId).emit("seat_released", { seatId });
+        }
       }
       // Clear local set
       socket.data.heldSeats.clear();

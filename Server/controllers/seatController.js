@@ -31,9 +31,10 @@ exports.bookSeats = catchAsync(async (req, res, next) => {
   );
 
   // Notifying all users in the event room that these seats are now BOOKED
-  const io = req.app.get("io");
+  const io = req.app.get("io"); // Accessing the global socket instance
   if (io) {
     io.to(eventId).emit("seats_booked", { seatIds });
+  } else {
   }
 
   res.status(201).json({
@@ -46,7 +47,7 @@ exports.getMyBookings = catchAsync(async (req, res, next) => {
   const bookings = await Booking.find({ user: req.user._id })
     .populate({
       path: "event",
-      select: "title date venueConfig.address",
+      select: "title date venue venueConfig.address",
     })
     .populate({
       path: "seats",

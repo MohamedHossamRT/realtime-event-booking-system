@@ -15,6 +15,7 @@ export interface User {
 export interface Event {
   _id: string;
   title: string;
+  venue: string;
   date: string;
   status: "draft" | "active" | "ended" | "cancelled";
   venueConfig: {

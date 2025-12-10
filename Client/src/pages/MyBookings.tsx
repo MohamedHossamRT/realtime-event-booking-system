@@ -1,4 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { useQuery } from "@tanstack/react-query";
+import { BookingService } from "@/services/bookingService";
+import { Link } from "react-router-dom";
 import {
   Ticket,
   Calendar,
@@ -12,12 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 
-import { useQuery } from "@tanstack/react-query";
-import { BookingService } from "@/services/bookingService";
-import { Link } from "react-router-dom";
-
 export default function MyBookings() {
-  // Fetching th data
   const { data, isLoading, error } = useQuery({
     queryKey: ["my-bookings"],
     queryFn: BookingService.getMyBookings,
@@ -25,7 +23,6 @@ export default function MyBookings() {
 
   const bookings = data?.data?.bookings || [];
 
-  // Loading the state
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -37,7 +34,6 @@ export default function MyBookings() {
     );
   }
 
-  // Error State
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -58,7 +54,7 @@ export default function MyBookings() {
 
   const totalBookings = bookings.length;
   const totalTickets = bookings.reduce(
-    (acc: number, b: any) => acc + b.seats.length,
+    (acc: number, b: any) => acc + (b.seats?.length || 0),
     0
   );
   const totalSpent = bookings.reduce(
@@ -84,7 +80,7 @@ export default function MyBookings() {
           </div>
         </div>
 
-        {/* Stats Bar */}
+        {/* Stats Bar (Dynamic) */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <Card className="border-border/50 bg-card/80">
             <CardContent className="p-4 text-center">
@@ -117,7 +113,10 @@ export default function MyBookings() {
         {/* Booking Cards */}
         <div className="space-y-4">
           {bookings.map((booking: any, index: number) => {
-            const eventDate = new Date(booking.event.date);
+            const eventDate = booking.event?.date
+              ? new Date(booking.event.date)
+              : new Date();
+
             return (
               <Card
                 key={booking._id}
@@ -126,15 +125,16 @@ export default function MyBookings() {
               >
                 <CardHeader className="pb-2">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    {/* Real Event Title */}
                     <CardTitle className="text-xl font-display">
-                      {booking.event.title}
+                      {booking.event?.title || "Event No Longer Available"}
                     </CardTitle>
                     <Badge
                       variant="outline"
                       className="w-fit gap-1 border-success/50 bg-success/10 text-success"
                     >
                       <CheckCircle className="h-3 w-3" />
-                      {booking.status}
+                      {booking.status || "Confirmed"}
                     </Badge>
                   </div>
                 </CardHeader>
@@ -143,10 +143,10 @@ export default function MyBookings() {
                   <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-primary" />
+                      {/* Real Date & Time */}
                       <span>
                         {eventDate.toLocaleDateString(undefined, {
                           weekday: "short",
-                          year: "numeric",
                           month: "short",
                           day: "numeric",
                         })}
@@ -159,7 +159,8 @@ export default function MyBookings() {
                     </div>
                     <div className="flex items-center gap-2">
                       <MapPin className="h-4 w-4 text-primary" />
-                      <span>Pulse Main Hall</span>
+                      {/* Real Venue */}
+                      <span>{booking.event?.venue || "Pulse Main Hall"}</span>
                     </div>
                   </div>
 
@@ -172,7 +173,8 @@ export default function MyBookings() {
                         Seats
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        {booking.seats.map((seat: any) => (
+                        {/* Real Seat Labels */}
+                        {booking.seats?.map((seat: any) => (
                           <span
                             key={seat._id}
                             className="px-3 py-1 text-sm font-medium rounded-md bg-primary/10 text-primary border border-primary/20"

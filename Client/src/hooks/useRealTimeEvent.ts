@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -29,9 +30,17 @@ export const useRealTimeEvent = (eventId: string | undefined) => {
   // Syncing API Data to Local State
   useEffect(() => {
     if (seatsData?.data?.seats) {
-      setSeats(seatsData.data.seats);
+      const syncedSeats = seatsData.data.seats.map((seat: any) => {
+        // If seat is locked by ME, show as 'selected' (Blue)
+        if (seat.status === "locked" && seat.lockedBy === user?._id) {
+          return { ...seat, status: "selected" };
+        }
+        return seat;
+      });
+
+      setSeats(syncedSeats);
     }
-  }, [seatsData]);
+  }, [seatsData, user]); // Add 'user' to dependency array
 
   // Socket Connection & Event Listeners
   useEffect(() => {
@@ -65,9 +74,13 @@ export const useRealTimeEvent = (eventId: string | undefined) => {
     // Listen: Seat Released
     const handleSeatReleased = (payload: { seatId: string }) => {
       setSeats((prev) =>
-        prev.map((seat) =>
-          seat._id === payload.seatId ? { ...seat, status: "available" } : seat
-        )
+        prev.map((seat) => {
+          // If the seat is already 'booked', ignore the release event.
+          if (seat._id === payload.seatId && seat.status !== "booked") {
+            return { ...seat, status: "available" };
+          }
+          return seat;
+        })
       );
     };
 
@@ -75,6 +88,7 @@ export const useRealTimeEvent = (eventId: string | undefined) => {
     const handleSeatsBooked = (payload: { seatIds: string[] }) => {
       setSeats((prev) =>
         prev.map((seat) =>
+          // If this seat ID is in the booked list, force status to 'booked'
           payload.seatIds.includes(seat._id)
             ? { ...seat, status: "booked" }
             : seat

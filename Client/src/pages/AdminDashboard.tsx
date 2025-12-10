@@ -68,6 +68,7 @@ export default function AdminDashboard() {
       // Calling the endpoint
       await EventService.createEvent({
         title: eventTitle,
+        venue: venueName,
         date: combinedDate.toISOString(),
         venueConfig: {
           rows: Number(rows),

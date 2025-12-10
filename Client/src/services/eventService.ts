@@ -5,6 +5,7 @@ import { ApiResponse, Event, Seat } from "@/types/api";
 interface CreateEventDTO {
   title: string;
   date: string;
+  venue: string;
   venueConfig: {
     rows: number;
     cols: number;

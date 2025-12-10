@@ -27,7 +27,7 @@ const io = new Server(server, {
   },
 });
 
-// Store IO instance globally so that Controllers can access it
+// Store IO instance globally so that the Controllers can access it
 app.set("io", io);
 io.use(socketAuth);
 

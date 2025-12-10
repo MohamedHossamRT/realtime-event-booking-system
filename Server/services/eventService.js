@@ -8,7 +8,12 @@ const AppError = require("../utils/appError");
  */
 exports.createEvent = async (eventData) => {
   // Create the Event Record
-  const event = await Event.create(eventData);
+  const event = await Event.create({
+    title: eventData.title,
+    venue: eventData.venue,
+    date: eventData.date,
+    venueConfig: eventData.venueConfig,
+  });
 
   // Generate Seat Grid
   const seats = [];
@@ -40,7 +45,45 @@ exports.createEvent = async (eventData) => {
 };
 
 exports.getAllEvents = async () => {
-  return await Event.find({ status: "active" }).sort({ date: 1 });
+  const events = await Event.aggregate([
+    // getting active events
+    { $match: { status: "active" } },
+
+    // 2. Joining with Seats to count available ones
+    // More optimal than fetching all seats and filtering
+    {
+      $lookup: {
+        from: "seats", // seats collection
+        let: { eventId: "$_id" },
+        pipeline: [
+          {
+            $match: {
+              $expr: { $eq: ["$event", "$$eventId"] },
+              status: "available", // Only count available
+            },
+          },
+          { $count: "count" },
+        ],
+        as: "availableSeatsCount",
+      },
+    },
+
+    // Flattening the count (Lookup returns an array)
+    {
+      $addFields: {
+        availableSeats: {
+          $ifNull: [{ $arrayElemAt: ["$availableSeatsCount.count", 0] }, 0],
+        },
+      },
+    },
+
+    // Removing the temp array
+    { $project: { availableSeatsCount: 0 } },
+
+    { $sort: { date: 1 } },
+  ]);
+
+  return events;
 };
 
 exports.getEventById = async (id) => {

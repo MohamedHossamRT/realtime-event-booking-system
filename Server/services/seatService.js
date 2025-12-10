@@ -33,8 +33,14 @@ exports.getEventSeats = async (eventId) => {
     const lockedByUserId = locks[index];
 
     // A seat is "locked" if Redis has a lock OR Mongo says it's already booked
+    // Returning 'lockedBy' also so that the frontend knows if it's their own lock
     if (lockedByUserId) {
-      return { ...seat, status: "locked", isTemporarilyHeld: true };
+      return {
+        ...seat,
+        status: "locked",
+        isTemporarilyHeld: true,
+        lockedBy: lockedByUserId,
+      };
     }
 
     return seat;
