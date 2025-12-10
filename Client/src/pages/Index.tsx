@@ -1,9 +1,12 @@
-import { useState, useEffect } from "react";
-import { Zap, Sparkles, Users, Clock } from "lucide-react";
-import { EventCard } from "@/components/EventCard";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { Zap, Sparkles, Users, Clock, AlertCircle } from "lucide-react";
+import { EventCard, Event as FrontendEvent } from "@/components/EventCard";
 import { EventCardSkeleton } from "@/components/EventCardSkeleton";
-import { MOCK_EVENTS } from "@/data/mockEvents";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+
+import { EventService } from "@/services/eventService";
+import { useQuery } from "@tanstack/react-query";
 
 const features = [
   {
@@ -23,14 +26,55 @@ const features = [
   },
 ];
 
-const Index = () => {
-  const [isLoading, setIsLoading] = useState(true);
+// Helper -> Deterministic Image Picker
+// Since the backend doesn't store images, pick one based on the Event ID
+const EVENT_IMAGES = [
+  "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", // Concert
+  "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", // Crowd
+  "https://images.unsplash.com/photo-1429962714451-bb934ecdc4ec?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", // Party
+  "https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", // Cinema
+];
 
-  // Simulate loading state
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1500);
-    return () => clearTimeout(timer);
-  }, []);
+const Index = () => {
+  // Fetching Events
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["events"],
+    queryFn: EventService.getAllEvents,
+  });
+
+  // Data Transformation from Backend to Frontend
+  const events: FrontendEvent[] =
+    data?.data?.events.map((beEvent: any) => {
+      // Calculating total seats from config
+      const totalSeats = beEvent.venueConfig.rows * beEvent.venueConfig.cols;
+
+      const dateObj = new Date(beEvent.date);
+
+      return {
+        id: beEvent._id,
+        title: beEvent.title,
+        // "Oct 24, 2025"
+        date: dateObj.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        }),
+        // "8:00 PM"
+        time: dateObj.toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+        }),
+        venue: "Pulse Main Hall", // Static venue name since backend stores config only
+        image:
+          EVENT_IMAGES[
+            beEvent._id.charCodeAt(beEvent._id.length - 1) % EVENT_IMAGES.length
+          ], // Random deterministic image
+        price: beEvent.venueConfig.price,
+        availableSeats: totalSeats,
+        totalSeats: totalSeats,
+        category: "Live Event",
+      };
+    }) || [];
 
   return (
     <div className="min-h-screen">
@@ -69,9 +113,11 @@ const Index = () => {
               className="flex flex-col gap-4 sm:flex-row sm:justify-center animate-fade-in-up"
               style={{ animationDelay: "0.2s" }}
             >
-              <Button variant="hero" size="xl">
-                Browse Events
-              </Button>
+              <Link to="/login">
+                <Button variant="hero" size="xl">
+                  Start Booking
+                </Button>
+              </Link>
             </div>
           </div>
 
@@ -101,7 +147,7 @@ const Index = () => {
       </section>
 
       {/* Events Section */}
-      <section className="py-16 md:py-20">
+      <section className="py-16 md:py-20" id="events">
         <div className="container">
           <div className="mb-10 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
@@ -112,20 +158,41 @@ const Index = () => {
                 Discover and book your next unforgettable experience
               </p>
             </div>
-            <Button variant="ghost" className="text-primary">
-              View All Events →
-            </Button>
           </div>
 
           {/* Events Grid */}
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {isLoading
-              ? Array.from({ length: 3 }).map((_, i) => (
-                  <EventCardSkeleton key={i} />
-                ))
-              : MOCK_EVENTS.map((event) => (
-                  <EventCard key={event.id} event={event} />
-                ))}
+            {isLoading ? (
+              // Loading State (Skeletons)
+              Array.from({ length: 3 }).map((_, i) => (
+                <EventCardSkeleton key={i} />
+              ))
+            ) : error ? (
+              // Error State
+              <div className="col-span-full flex flex-col items-center justify-center p-10 text-center border rounded-lg bg-destructive/5 border-destructive/20">
+                <AlertCircle className="h-10 w-10 text-destructive mb-4" />
+                <h3 className="text-lg font-semibold text-destructive">
+                  Failed to load events
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  {(error as any).message || "Could not connect to the server."}
+                </p>
+                <Button
+                  variant="outline"
+                  onClick={() => window.location.reload()}
+                >
+                  Try Again
+                </Button>
+              </div>
+            ) : events.length === 0 ? (
+              // Empty State
+              <div className="col-span-full text-center py-20 text-muted-foreground">
+                <p>No events found. Log in as Admin to create one!</p>
+              </div>
+            ) : (
+              // Success State
+              events.map((event) => <EventCard key={event.id} event={event} />)
+            )}
           </div>
         </div>
       </section>
@@ -139,9 +206,11 @@ const Index = () => {
           <p className="mb-8 text-muted-foreground">
             Join thousands of fans who never miss out on their favorite events.
           </p>
-          <Button variant="hero" size="xl">
-            Get Started Free
-          </Button>
+          <Link to="/register">
+            <Button variant="hero" size="xl">
+              Get Started Free
+            </Button>
+          </Link>
         </div>
       </section>
     </div>

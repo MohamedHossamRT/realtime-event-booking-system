@@ -1,5 +1,6 @@
 const SeatService = require("../services/seatService");
 const catchAsync = require("../utils/catchAsync");
+const Booking = require("../models/Booking");
 
 exports.getSeats = catchAsync(async (req, res, next) => {
   const { eventId } = req.params;
@@ -16,7 +17,6 @@ exports.getSeats = catchAsync(async (req, res, next) => {
 exports.bookSeats = catchAsync(async (req, res, next) => {
   const { eventId } = req.params;
   const { seatIds, totalAmount } = req.body;
-
   const userId = req.user._id;
 
   if (!seatIds || seatIds.length === 0) {
@@ -29,6 +29,12 @@ exports.bookSeats = catchAsync(async (req, res, next) => {
     seatIds,
     totalAmount
   );
+
+  // Notifying all users in the event room that these seats are now BOOKED
+  const io = req.app.get("io");
+  if (io) {
+    io.to(eventId).emit("seats_booked", { seatIds });
+  }
 
   res.status(201).json({
     status: "success",

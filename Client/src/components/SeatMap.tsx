@@ -1,79 +1,30 @@
-import { useState } from "react";
-import { SeatButton, SeatStatus } from "@/components/SeatButton";
-import { cn } from "@/lib/utils";
-
-interface Seat {
-  row: string;
-  number: number;
-  status: SeatStatus;
-  price: number;
-}
+import { useMemo } from "react";
+import { SeatButton } from "@/components/SeatButton";
+import { Seat } from "@/types/api";
 
 interface SeatMapProps {
-  onSelectionChange?: (seats: Seat[]) => void;
+  seats: Seat[];
+  onSeatClick: (seat: Seat) => void;
+  currentUserId?: string; // If explicit ID checks
 }
 
-// Generate mock seat data with 10x10 grid
-const generateMockSeats = (): Seat[][] => {
-  const rows = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
-  
-  return rows.map((row, rowIndex) => {
-    return Array.from({ length: 10 }, (_, i) => {
-      // Create some variety in seat states
-      let status: SeatStatus = "default";
-      const seatNum = rowIndex * 10 + i;
-      
-      // Some seats are booked
-      if ([3, 15, 24, 35, 47, 58, 66, 72, 81, 89].includes(seatNum)) {
-        status = "booked";
-      }
-      // Some seats are locked (simulating real-time holds)
-      else if ([7, 22, 34, 45, 67].includes(seatNum)) {
-        status = "locked";
-      }
-      
-      // Price tiers based on row
-      const price = rowIndex < 3 ? 89.99 : rowIndex < 6 ? 69.99 : 49.99;
+export function SeatMap({ seats, onSeatClick }: SeatMapProps) {
+  // Grouping seats by Row { "A": [Seat, Seat], "B": [...] }
+  // useMemo to prevent re-calculating on every render unless seats change
+  const rows = useMemo(() => {
+    return seats.reduce((acc, seat) => {
+      if (!acc[seat.row]) acc[seat.row] = [];
+      acc[seat.row].push(seat);
+      return acc;
+    }, {} as Record<string, Seat[]>);
+  }, [seats]);
 
-      return {
-        row,
-        number: i + 1,
-        status,
-        price,
-      };
-    });
-  });
-};
-
-export function SeatMap({ onSelectionChange }: SeatMapProps) {
-  const [seats, setSeats] = useState<Seat[][]>(generateMockSeats);
-
-  const handleSeatClick = (rowIndex: number, seatIndex: number) => {
-    setSeats((prevSeats) => {
-      const newSeats = prevSeats.map((row, rIdx) =>
-        row.map((seat, sIdx) => {
-          if (rIdx === rowIndex && sIdx === seatIndex) {
-            const newStatus: SeatStatus =
-              seat.status === "default" ? "selected" : 
-              seat.status === "selected" ? "default" : 
-              seat.status;
-            return { ...seat, status: newStatus };
-          }
-          return seat;
-        })
-      );
-
-      // Notify parent of selection changes
-      const selectedSeats = newSeats.flat().filter((s) => s.status === "selected");
-      onSelectionChange?.(selectedSeats);
-
-      return newSeats;
-    });
-  };
+  // Sorting rows alphabetically (A, B, C...)
+  const sortedRowKeys = Object.keys(rows).sort();
 
   return (
     <div className="flex flex-col items-center gap-6">
-      {/* Screen */}
+      {/* Screen Visual (Preserved from Lovable) */}
       <div className="w-full max-w-md">
         <div className="screen-curve h-8 w-full flex items-end justify-center pb-1">
           <span className="text-xs font-medium text-primary/70 uppercase tracking-widest">
@@ -85,30 +36,55 @@ export function SeatMap({ onSelectionChange }: SeatMapProps) {
       {/* Seat Grid */}
       <div className="overflow-x-auto w-full pb-4">
         <div className="inline-flex flex-col gap-2 min-w-max px-4">
-          {seats.map((row, rowIndex) => (
-            <div key={row[0].row} className="flex items-center gap-2">
-              {/* Row Label */}
+          {sortedRowKeys.map((rowLabel) => (
+            <div key={rowLabel} className="flex items-center gap-2">
+              {/* Row Label (Left) */}
               <span className="w-6 text-center text-xs font-semibold text-muted-foreground">
-                {row[0].row}
+                {rowLabel}
               </span>
-              
-              {/* Seats */}
+
+              {/* Seats in this Row */}
               <div className="flex gap-1.5 sm:gap-2">
-                {row.map((seat, seatIndex) => (
-                  <SeatButton
-                    key={`${seat.row}${seat.number}`}
-                    row={seat.row}
-                    number={seat.number}
-                    status={seat.status}
-                    price={seat.price}
-                    onSelect={() => handleSeatClick(rowIndex, seatIndex)}
-                  />
-                ))}
+                {rows[rowLabel]
+                  .sort((a, b) => a.number - b.number)
+                  .map((seat) => {
+                    // MAP BACKEND STATUS -> COMPONENT STATUS
+                    // Backend: 'available' | 'locked' | 'booked' | 'selected' (from hook)
+                    // Component: 'default' | 'locked' | 'booked' | 'selected'
+
+                    let visualStatus:
+                      | "default"
+                      | "selected"
+                      | "locked"
+                      | "booked" = "default";
+
+                    if (seat.status === "booked") visualStatus = "booked";
+                    else if (seat.status === "locked")
+                      visualStatus = "locked"; // Someone else
+                    else if (seat.status === "selected")
+                      visualStatus = "selected"; // Me (Blue)
+                    else visualStatus = "default"; // Available
+
+                    return (
+                      <SeatButton
+                        key={seat._id} // Using ID as key
+                        row={seat.row}
+                        number={seat.number}
+                        status={visualStatus}
+                        price={seat.price}
+                        onSelect={() => onSeatClick(seat)}
+                        // Disabling interaction if booked or locked by someone else
+                        disabled={
+                          visualStatus === "booked" || visualStatus === "locked"
+                        }
+                      />
+                    );
+                  })}
               </div>
-              
-              {/* Row Label (right side) */}
+
+              {/* Row Label (Right) */}
               <span className="w-6 text-center text-xs font-semibold text-muted-foreground">
-                {row[0].row}
+                {rowLabel}
               </span>
             </div>
           ))}

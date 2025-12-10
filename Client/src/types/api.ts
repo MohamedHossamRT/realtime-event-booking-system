@@ -30,7 +30,7 @@ export interface Seat {
   number: number;
   label: string;
   price: number;
-  status: "available" | "locked" | "booked";
+  status: "available" | "locked" | "booked" | "selected" | "default";
   isTemporarilyHeld?: boolean; // From frontend logic
 }
 

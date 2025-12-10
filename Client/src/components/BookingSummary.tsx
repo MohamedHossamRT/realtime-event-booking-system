@@ -1,6 +1,12 @@
-import { Ticket, CreditCard, Clock } from "lucide-react";
+import { Ticket, Clock, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 
@@ -15,7 +21,8 @@ interface BookingSummaryProps {
   eventDate: string;
   eventTime: string;
   selectedSeats: SelectedSeat[];
-  onCheckout?: () => void;
+  onCheckout: () => void;
+  isLoading?: boolean;
 }
 
 export function BookingSummary({
@@ -24,6 +31,7 @@ export function BookingSummary({
   eventTime,
   selectedSeats,
   onCheckout,
+  isLoading = false,
 }: BookingSummaryProps) {
   const subtotal = selectedSeats.reduce((sum, seat) => sum + seat.price, 0);
   const serviceFee = selectedSeats.length * 2.5;
@@ -56,7 +64,8 @@ export function BookingSummary({
               Selected Seats
             </span>
             <Badge variant="secondary" className="text-xs">
-              {selectedSeats.length} {selectedSeats.length === 1 ? "seat" : "seats"}
+              {selectedSeats.length}{" "}
+              {selectedSeats.length === 1 ? "seat" : "seats"}
             </Badge>
           </div>
 
@@ -93,7 +102,9 @@ export function BookingSummary({
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Service Fee</span>
-                <span className="text-foreground">${serviceFee.toFixed(2)}</span>
+                <span className="text-foreground">
+                  ${serviceFee.toFixed(2)}
+                </span>
               </div>
               <Separator />
               <div className="flex justify-between text-base font-semibold">
@@ -102,11 +113,12 @@ export function BookingSummary({
               </div>
             </div>
 
-            {/* Timer Warning */}
-            <div className="flex items-center gap-2 rounded-lg border border-warning/30 bg-warning/10 p-3">
-              <Clock className="h-4 w-4 text-warning" />
-              <p className="text-xs text-warning">
-                Your seats are held for <span className="font-semibold">10:00</span> minutes
+            {/* Timer Warning - Changed 'warning' to standard Tailwind 'amber' to be safe */}
+            <div className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
+              <Clock className="h-4 w-4 text-amber-500" />
+              <p className="text-xs text-amber-600 dark:text-amber-500">
+                Your seats are held for{" "}
+                <span className="font-semibold">10:00</span> minutes
               </p>
             </div>
           </>
@@ -116,13 +128,18 @@ export function BookingSummary({
       <CardFooter>
         <Button
           variant="hero"
-          size="lg"
-          className="w-full gap-2"
-          disabled={selectedSeats.length === 0}
+          className="w-full"
           onClick={onCheckout}
+          disabled={selectedSeats.length === 0 || isLoading}
         >
-          <CreditCard className="h-4 w-4" />
-          Proceed to Checkout
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Processing...
+            </>
+          ) : (
+            "Confirm Booking"
+          )}
         </Button>
       </CardFooter>
     </Card>

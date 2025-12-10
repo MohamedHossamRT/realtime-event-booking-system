@@ -1,5 +1,11 @@
 import { useState } from "react";
-import { Ticket, CreditCard, ChevronUp, ChevronDown } from "lucide-react";
+import {
+  Ticket,
+  CreditCard,
+  ChevronUp,
+  ChevronDown,
+  Loader2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -13,11 +19,16 @@ interface SelectedSeat {
 interface MobileBookingSummaryProps {
   selectedSeats: SelectedSeat[];
   onCheckout?: () => void;
+  isLoading?: boolean;
 }
 
-export function MobileBookingSummary({ selectedSeats, onCheckout }: MobileBookingSummaryProps) {
+export function MobileBookingSummary({
+  selectedSeats,
+  onCheckout,
+  isLoading = false,
+}: MobileBookingSummaryProps) {
   const [expanded, setExpanded] = useState(false);
-  
+
   const subtotal = selectedSeats.reduce((sum, seat) => sum + seat.price, 0);
   const serviceFee = selectedSeats.length * 2.5;
   const total = subtotal + serviceFee;
@@ -35,7 +46,9 @@ export function MobileBookingSummary({ selectedSeats, onCheckout }: MobileBookin
       >
         <div className="p-4 space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-muted-foreground">Selected Seats</span>
+            <span className="text-sm font-medium text-muted-foreground">
+              Selected Seats
+            </span>
             <Badge variant="secondary">{selectedSeats.length} seats</Badge>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -45,13 +58,16 @@ export function MobileBookingSummary({ selectedSeats, onCheckout }: MobileBookin
                 variant="outline"
                 className="border-primary/30 bg-primary/5"
               >
-                {seat.row}{seat.number} · ${seat.price}
+                {seat.row}
+                {seat.number} · ${seat.price}
               </Badge>
             ))}
           </div>
           <div className="flex justify-between text-sm pt-2 border-t border-border">
             <span className="text-muted-foreground">Subtotal + Fees</span>
-            <span>${subtotal.toFixed(2)} + ${serviceFee.toFixed(2)}</span>
+            <span>
+              ${subtotal.toFixed(2)} + ${serviceFee.toFixed(2)}
+            </span>
           </div>
         </div>
       </div>
@@ -67,7 +83,8 @@ export function MobileBookingSummary({ selectedSeats, onCheckout }: MobileBookin
           </div>
           <div className="text-left min-w-0">
             <p className="text-xs text-muted-foreground">
-              {selectedSeats.length} {selectedSeats.length === 1 ? "seat" : "seats"} selected
+              {selectedSeats.length}{" "}
+              {selectedSeats.length === 1 ? "seat" : "seats"} selected
             </p>
             <p className="text-lg font-bold text-foreground truncate">
               ${total.toFixed(2)}
@@ -85,9 +102,18 @@ export function MobileBookingSummary({ selectedSeats, onCheckout }: MobileBookin
           size="lg"
           className="gap-2 shrink-0"
           onClick={onCheckout}
+          disabled={isLoading}
         >
-          <CreditCard className="h-4 w-4" />
-          Checkout
+          {isLoading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+            </>
+          ) : (
+            <>
+              <CreditCard className="h-4 w-4" />
+              Checkout
+            </>
+          )}
         </Button>
       </div>
     </div>

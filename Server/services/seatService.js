@@ -1,7 +1,8 @@
-const Seat = require("../models/Seat");
-const Booking = require("../models/Booking");
 const mongoose = require("mongoose"); // For sessions
 const redis = require("../config/redis");
+const Seat = require("../models/Seat");
+const Booking = require("../models/Booking");
+const Event = require("../models/Event"); // <--- WAS MISSING
 const AppError = require("../utils/appError");
 
 // Fenerate consistent Redis keys

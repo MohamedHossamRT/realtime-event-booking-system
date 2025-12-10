@@ -9,6 +9,27 @@ const {
 module.exports = (io, socket) => {
   const user = socket.data.user;
 
+  // Helper: To release all locks for this user (DRY principle)
+  const releaseHeldSeats = async () => {
+    if (socket.data.heldSeats.size > 0) {
+      logger.info(
+        `Releasing ${socket.data.heldSeats.size} locks for user ${user.name}`
+      );
+
+      for (const item of socket.data.heldSeats) {
+        const [eventId, seatId] = item.split(":");
+
+        // Release in Redis
+        await SeatService.releaseSeat(eventId, seatId, user._id.toString());
+
+        // Notify Room
+        io.to(eventId).emit("seat_released", { seatId });
+      }
+      // Clear local set
+      socket.data.heldSeats.clear();
+    }
+  };
+
   // EVENT: Join Room
   socket.on(
     "join_event",
@@ -19,9 +40,11 @@ module.exports = (io, socket) => {
   );
 
   // EVENT: Leave Room
+  // When user goes to another page, their locks are released
   socket.on(
     "leave_event",
-    validateSocket(joinRoomSchema, (eventId) => {
+    validateSocket(joinRoomSchema, async (eventId) => {
+      await releaseHeldSeats();
       socket.leave(eventId);
     })
   );
@@ -41,6 +64,24 @@ module.exports = (io, socket) => {
           seatId,
           lockedBy: user._id,
         });
+
+        // TIMEOUT SYNC
+        // As redis expires silently. setting a timer to notify the UI is a better option.
+        setTimeout(async () => {
+          // Checking if this specific socket still holds the lock locally
+          if (socket.data.heldSeats.has(`${eventId}:${seatId}`)) {
+            logger.info(`Auto-releasing expired lock for ${seatId}`);
+
+            // Force release in Redis (in case Redis timer drifted slightly)
+            await SeatService.releaseSeat(eventId, seatId, user._id.toString());
+
+            // Notifying everyone (including me) that it's free
+            io.to(eventId).emit("seat_released", { seatId });
+
+            // Remove from local tracking
+            socket.data.heldSeats.delete(`${eventId}:${seatId}`);
+          }
+        }, 600000); // 10 minutes (600,000 ms)
       } catch (error) {
         // Send error ONLY to the user who requested it
         socket.emit("lock_failed", {
